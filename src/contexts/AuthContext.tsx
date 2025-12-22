@@ -23,6 +23,7 @@ export interface User {
   phone: string;
   avatar?: string;
   isEmailVerified: boolean;
+  lastPasswordChangedAt?: string | null;
 }
 
 interface LoginResponse {
@@ -36,6 +37,7 @@ interface AuthContextType {
   loading: boolean;
 
   setAuthUser: (user: User) => void;
+  updateUser: (data: Partial<User>) => void;
 
   login: (
     email: string,
@@ -53,7 +55,7 @@ interface AuthContextType {
   ) => Promise<{ email: string }>;
 
   logout: () => void;
-  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<string>;
   forgotPassword: (email: string) => Promise<{ attemptleft?: number }>;
   resendEmailOtp: (email: string) => Promise<{ attemptleft?: number }>;
 }
@@ -78,6 +80,21 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // ===================
+  // Update User 
+  // =================
+
+  const updateUser = (data: Partial<User>) => {
+  setUser((prev) => {
+    if (!prev) return prev;
+
+    const updatedUser = { ...prev, ...data };
+    localStorage.setItem("swpa_user", JSON.stringify(updatedUser));
+    return updatedUser;
+  });
+};
+
 
   /* ======================
      SET AUTH USER
@@ -206,15 +223,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /* ======================
      CHANGE PASSWORD
   ====================== */
-  const changePassword = async (oldPassword: string, newPassword: string) => {
-    setLoading(true);
+  const changePassword = async (
+    oldPassword: string,
+    newPassword: string
+  ) => {
     try {
-      await api.post("/change-password", {
+      const storedUser = localStorage.getItem("swpa_user");
+      if (!storedUser) {
+        throw new Error("User not logged in");
+      }
+
+      const user = JSON.parse(storedUser);
+
+      const res = await api.post("/change-password", {
+        email: user.email,
         oldPassword,
         newPassword,
       });
-    } finally {
-      setLoading(false);
+
+      // ✅ return updated date from backend
+      return res.data.lastPasswordChangedAt;
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to change password");
+      throw err;
     }
   };
 
@@ -244,6 +275,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         forgotPassword,
         resendEmailOtp,
         setAuthUser,
+        updateUser
       }}
     >
       {children}
