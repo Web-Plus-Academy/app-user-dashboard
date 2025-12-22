@@ -87,12 +87,7 @@ const Profile: React.FC = () => {
               {user?.name}
             </h2>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
-            <div className="flex justify-center sm:justify-start gap-2 mt-3">
-              <span className="status-badge completed">
-                <Shield className="w-3 h-3 mr-1" />
-                Verified
-              </span>
-            </div>
+            
           </div>
 
           {/* Edit Button */}
