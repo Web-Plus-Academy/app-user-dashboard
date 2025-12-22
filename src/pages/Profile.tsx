@@ -16,9 +16,15 @@ import { toast } from "sonner";
 import "./Profile.css";
 
 const Profile: React.FC = () => {
-  const { user, logout, changePassword, updateUser } = useAuth();
-  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const {
+    user,
+    logout,
+    changePassword,
+    updateUser,
+    updateProfileName,
+  } = useAuth();
 
+  const [updatingPassword, setUpdatingPassword] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
@@ -34,64 +40,67 @@ const Profile: React.FC = () => {
     confirmPassword: "",
   });
 
-
-
-
   /* ======================
-     SAVE PROFILE (UI ONLY)
+     SAVE PROFILE (NAME ONLY)
   ====================== */
-  const handleSaveProfile = () => {
-    toast.success("Profile updated successfully!");
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    if (profileData.name.trim().length < 2) {
+      toast.error("Name must be at least 2 characters");
+      return;
+    }
+
+    try {
+      await updateProfileName(profileData.name.trim());
+      toast.success("Name updated successfully");
+      setIsEditing(false);
+    } catch {
+      toast.error("Failed to update name");
+    }
   };
 
   /* ======================
      CHANGE PASSWORD
   ====================== */
- const handleChangePassword = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (passwordData.newPassword !== passwordData.confirmPassword) {
-    toast.error("Passwords do not match");
-    return;
-  }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
-  try {
-    setUpdatingPassword(true);
+    try {
+      setUpdatingPassword(true);
 
-    const updatedDate = await changePassword(
-      passwordData.currentPassword,
-      passwordData.newPassword
-    );
+      const updatedDate = await changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
 
-    // ✅ NOW THIS WORKS
-    updateUser({
-      lastPasswordChangedAt: updatedDate,
-    });
+      updateUser({
+        lastPasswordChangedAt: updatedDate,
+      });
 
-    toast.success("Password updated successfully");
+      toast.success("Password updated successfully");
 
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
 
-    setShowPasswordSection(false);
-  } catch {
-    // handled already
-  } finally {
-    setUpdatingPassword(false);
-  }
-};
-
-
+      setShowPasswordSection(false);
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
 
   const formatLastChanged = (date?: string | null) => {
     if (!date) return "Never";
 
     const diffDays = Math.floor(
-      (Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - new Date(date).getTime()) /
+        (1000 * 60 * 60 * 24)
     );
 
     if (diffDays === 0) return "Today";
@@ -117,18 +126,13 @@ const Profile: React.FC = () => {
         {/* Profile Card */}
         <div className="glass-card rounded-2xl p-5 sm:p-8 mb-6 opacity-0 animate-fade-in">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6 mb-6">
-            {/* Avatar */}
-            <div className="avatar-ring mx-auto sm:mx-0">
+            {/* Verified Badge */}
+            <div className="verify">
               <img
                 src="/swpaverified.png"
                 alt="Verified"
-                className="verified-logo"
+                className="verified-logo lg:h-20 lg:w-20 h-40 w-40"
               />
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center">
-                <span className="text-2xl sm:text-3xl font-bold text-primary-foreground">
-                  {user?.name.charAt(0)}
-                </span>
-              </div>
             </div>
 
             {/* User Info */}
@@ -139,12 +143,20 @@ const Profile: React.FC = () => {
               <p className="text-base text-muted-foreground mt-1">
                 User ID: SAREDUFY-{user?._id.slice(-5).toUpperCase()}
               </p>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              <p className="text-sm text-muted-foreground">
+                {user?.email}
+              </p>
             </div>
 
             {/* Edit Button */}
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                setIsEditing(!isEditing);
+                setProfileData({
+                  name: user?.name || "",
+                  email: user?.email || "",
+                });
+              }}
               className={`w-full sm:w-auto ${
                 isEditing ? "btn-secondary" : "btn-primary"
               }`}
@@ -181,7 +193,7 @@ const Profile: React.FC = () => {
                 <div className="flex gap-2 items-center">
                   Email Address
                   <span className="status-badge completed">
-                    <Shield className="w-3 h-3 mr-1" />
+                    <Lock className="w-3 h-3 mr-1" />
                     Verified
                   </span>
                 </div>
@@ -212,9 +224,13 @@ const Profile: React.FC = () => {
         {/* Password Section */}
         <div className="glass-card rounded-2xl p-5 sm:p-8 mb-6 opacity-0 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-display font-semibold">Password</h3>
+            <h3 className="text-lg font-display font-semibold">
+              Password
+            </h3>
             <button
-              onClick={() => setShowPasswordSection(!showPasswordSection)}
+              onClick={() =>
+                setShowPasswordSection(!showPasswordSection)
+              }
               className="text-primary text-sm hover:underline"
             >
               {showPasswordSection ? "Cancel" : "Change Password"}
@@ -222,40 +238,47 @@ const Profile: React.FC = () => {
           </div>
 
           {showPasswordSection ? (
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              {["currentPassword", "newPassword", "confirmPassword"].map(
-                (field) => (
-                  <div key={field} className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type={showPasswords ? "text" : "password"}
-                      placeholder={
-                        field === "currentPassword"
-                          ? "Current Password"
-                          : field === "newPassword"
-                          ? "New Password"
-                          : "Confirm New Password"
-                      }
-                      value={(passwordData as any)[field]}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          [field]: e.target.value,
-                        })
-                      }
-                      className="input-field pl-12 pr-12 w-full"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswords(!showPasswords)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showPasswords ? <EyeOff /> : <Eye />}
-                    </button>
-                  </div>
-                )
-              )}
+            <form
+              onSubmit={handleChangePassword}
+              className="space-y-4"
+            >
+              {[
+                "currentPassword",
+                "newPassword",
+                "confirmPassword",
+              ].map((field) => (
+                <div key={field} className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <input
+                    type={showPasswords ? "text" : "password"}
+                    placeholder={
+                      field === "currentPassword"
+                        ? "Current Password"
+                        : field === "newPassword"
+                        ? "New Password"
+                        : "Confirm New Password"
+                    }
+                    value={(passwordData as any)[field]}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        [field]: e.target.value,
+                      })
+                    }
+                    className="input-field pl-12 pr-12 w-full"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPasswords(!showPasswords)
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  >
+                    {showPasswords ? <EyeOff /> : <Eye />}
+                  </button>
+                </div>
+              ))}
 
               <button type="submit" className="btn-primary w-full">
                 Update Password
@@ -263,14 +286,17 @@ const Profile: React.FC = () => {
             </form>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Last changed {formatLastChanged(user?.lastPasswordChangedAt)}
+              Last changed{" "}
+              {formatLastChanged(user?.lastPasswordChangedAt)}
             </p>
           )}
         </div>
 
         {/* Logout */}
         <div className="glass-card rounded-2xl p-5 sm:p-8 opacity-0 animate-fade-in">
-          <h3 className="text-lg font-display font-semibold mb-4">Session</h3>
+          <h3 className="text-lg font-display font-semibold mb-4">
+            Session
+          </h3>
           <button
             onClick={logout}
             className="flex items-center gap-2 text-destructive hover:underline"

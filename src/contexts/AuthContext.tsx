@@ -38,6 +38,7 @@ interface AuthContextType {
 
   setAuthUser: (user: User) => void;
   updateUser: (data: Partial<User>) => void;
+  updateProfileName: (name: string) => Promise<void>;
 
   login: (
     email: string,
@@ -94,6 +95,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return updatedUser;
   });
 };
+
+
+//=====================
+// Update profile
+//===================
+const updateProfileName = async (name: string) => {
+  const storedUser = localStorage.getItem("swpa_user");
+  if (!storedUser) throw new Error("User not logged in");
+
+  const user = JSON.parse(storedUser);
+
+  const res = await api.post("/update-profile", {
+    email: user.email,
+    name,
+  });
+
+  // ✅ update context + localStorage
+  updateUser(res.data.user);
+};
+
 
 
   /* ======================
@@ -275,7 +296,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         forgotPassword,
         resendEmailOtp,
         setAuthUser,
-        updateUser
+        updateUser,
+        updateProfileName
       }}
     >
       {children}
