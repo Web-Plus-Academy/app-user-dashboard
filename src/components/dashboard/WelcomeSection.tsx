@@ -9,7 +9,7 @@ const WelcomeSection: React.FC = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setNow(prev => {
+      setNow((prev) => {
         const newTime = new Date();
         if (prev.getSeconds() !== newTime.getSeconds()) {
           setPulse(true);
@@ -82,7 +82,9 @@ const WelcomeSection: React.FC = () => {
 
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold mb-1">
               {getGreeting()},{" "}
-              <span  className="gradient-text text-2xl md:text-2xl lg:text-3xl">{user?.name}</span>
+              <span className="gradient-text text-2xl md:text-2xl lg:text-3xl">
+                {user?.name}
+              </span>
             </h1>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md">
@@ -95,14 +97,22 @@ const WelcomeSection: React.FC = () => {
         <div className="flex lg:hidden items-center gap-4 bg-secondary/50 rounded-xl p-3 backdrop-blur-sm">
           <div
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300
-            ${pulse ? "bg-orange-500/30 shadow-orange-pulse" : "bg-orange-500/20"}`}
+            ${
+              pulse
+                ? "bg-orange-500/30 shadow-orange-pulse"
+                : "bg-orange-500/20"
+            }`}
           >
             <Clock className="w-4 h-4 text-orange-500" />
           </div>
 
           <div className="time-fade">
             <p className="text-sm font-semibold">{formattedTime}</p>
-            <p className="text-[11px] text-muted-foreground">{formattedDate}</p>
+          </div>
+          {/* Vertical Line */}
+          <div className="h-6 w-px bg-border opacity-90" />
+          <div className="time-fade">
+            <p className="text-sm text-muted-foreground">{formattedDate}</p>
           </div>
         </div>
 
@@ -111,13 +121,17 @@ const WelcomeSection: React.FC = () => {
           <div className="flex items-center gap-2">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300
-              ${pulse ? "bg-orange-500/30 shadow-orange-pulse" : "bg-orange-500/20"}`}
+              ${
+                pulse
+                  ? "bg-orange-500/30 shadow-orange-pulse"
+                  : "bg-orange-500/20"
+              }`}
             >
               <Clock className="w-5 h-5 text-orange-500" />
             </div>
 
             <div className="time-fade">
-              <p className="text-lg font-bold">{formattedTime}</p>
+              <p className="text-base font-bold">{formattedTime}</p>
               <p className="text-xs text-muted-foreground">Current Time</p>
             </div>
           </div>
@@ -125,7 +139,7 @@ const WelcomeSection: React.FC = () => {
           <div className="w-px h-12 bg-border" />
 
           <div className="time-fade">
-            <p className="text-lg font-bold">{formattedDate}</p>
+            <p className="text-base font-bold">{formattedDate}</p>
             <p className="text-xs text-muted-foreground">Today</p>
           </div>
         </div>

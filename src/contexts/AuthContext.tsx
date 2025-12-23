@@ -38,7 +38,7 @@ interface AuthContextType {
 
   setAuthUser: (user: User) => void;
   updateUser: (data: Partial<User>) => void;
-  updateProfileName: (name: string) => Promise<void>;
+  updateProfile: (name: string, phone: string) => Promise<void>;
 
   login: (
     email: string,
@@ -97,10 +97,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 };
 
 
-//=====================
-// Update profile
-//===================
-const updateProfileName = async (name: string) => {
+// =====================
+// Update profile (name + phone)
+// =====================
+const updateProfile = async (name: string, phone: string) => {
   const storedUser = localStorage.getItem("swpa_user");
   if (!storedUser) throw new Error("User not logged in");
 
@@ -109,11 +109,13 @@ const updateProfileName = async (name: string) => {
   const res = await api.post("/update-profile", {
     email: user.email,
     name,
+    phone,
   });
 
   // ✅ update context + localStorage
   updateUser(res.data.user);
 };
+
 
 
 
@@ -297,7 +299,7 @@ const updateProfileName = async (name: string) => {
         resendEmailOtp,
         setAuthUser,
         updateUser,
-        updateProfileName
+        updateProfile
       }}
     >
       {children}
